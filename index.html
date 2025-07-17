@@ -33,28 +33,65 @@
             transform: translateY(0);
         }
 
-        /* Estilo para a barra de rolagem (opcional, mas melhora a estética) */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1F2937; /* bg-gray-800 */
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #4B5563; /* bg-gray-600 */
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6B7280; /* bg-gray-500 */
+        /* Estilo para a barra de rolagem */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1F2937; }
+        ::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6B7280; }
+
+        /* Estilos para o Acordeão */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Estilo para citações */
-        .blockquote {
-            border-left: 4px solid #FBBF24; /* border-amber-400 */
-            padding-left: 1rem;
-            margin: 1.5rem 0;
-            font-style: italic;
-            color: #9CA3AF; /* text-gray-400 */
+        /* Estilos para Flashcards */
+        .flashcard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .flashcard {
+            background-color: transparent;
+            perspective: 1000px;
+            min-height: 150px;
+        }
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.7s;
+            transform-style: preserve-3d;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+        }
+        .flashcard.is-flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #374151; /* border-gray-700 */
+        }
+        .flashcard-front {
+            background-color: #1F2937; /* bg-gray-800 */
+            color: #FBBF24; /* text-amber-400 */
+        }
+        .flashcard-back {
+            background-color: #374151; /* bg-gray-700 */
+            color: #D1D5DB; /* text-gray-300 */
+            transform: rotateY(180deg);
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -64,7 +101,6 @@
     <header class="relative h-screen flex items-center justify-center text-center overflow-hidden">
         <div class="absolute inset-0 bg-gray-900 opacity-75 z-10"></div>
         <div class="absolute inset-0 z-0">
-             <!-- Fundo Abstrato Sutil -->
              <div class="absolute inset-0 bg-grid-gray-800 [mask-image:linear-gradient(to_bottom,white_20%,transparent_100%)]"></div>
              <style>.bg-grid-gray-800{background-image:linear-gradient(to right, #374151 1px, transparent 1px), linear-gradient(to bottom, #374151 1px, transparent 1px);background-size:2rem 2rem;}</style>
         </div>
@@ -83,13 +119,11 @@
         </div>
     </header>
 
-    <!-- Barra de Navegação Fixa (Aparece ao rolar) -->
+    <!-- Barra de Navegação Fixa -->
     <nav id="main-nav" class="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg shadow-lg transition-all duration-300 opacity-0 -translate-y-full">
         <div class="max-w-5xl mx-auto px-4">
-            <div class="flex items-center justify-center h-16">
-                <div id="nav-links" class="flex space-x-6 md:space-x-8 text-sm md:text-base">
-                    <!-- Links serão injetados aqui pelo JS -->
-                </div>
+            <div id="nav-links" class="flex items-center justify-center h-16 text-sm md:text-base">
+                <!-- Links serão injetados aqui -->
             </div>
         </div>
     </nav>
@@ -113,145 +147,196 @@
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURAÇÃO ---
             const chapters = [
-                { id: 1, title: "A Igreja Definida nas Escrituras", file: "chapter1.json" },
-                { id: 2, title: "Instituição Divina e Espiritual", file: "chapter2.json" },
-                { id: 3, title: "Visível e Invisível", file: "chapter3.json" },
-                { id: 4, title: "Católica e Local", file: "chapter4.json" }
+                { id: 1, title: "Definida nas Escrituras", file: "chapter1.json", emoji: "📜" },
+                { id: 2, title: "Instituição Divina", file: "chapter2.json", emoji: "✨" },
+                { id: 3, title: "Visível e Invisível", file: "chapter3.json", emoji: "👁️" },
+                { id: 4, title: "Católica e Local", file: "chapter4.json", emoji: "🌍" }
             ];
             
             // --- ELEMENTOS DO DOM ---
             const contentContainer = document.getElementById('content-container');
             const nav = document.getElementById('main-nav');
             const navLinksContainer = document.getElementById('nav-links');
-            const yearSpan = document.getElementById('year');
-            yearSpan.textContent = new Date().getFullYear();
+            document.getElementById('year').textContent = new Date().getFullYear();
 
-            // --- FUNÇÕES ---
+            // --- FUNÇÕES DE RENDERIZAÇÃO ---
 
-            /**
-             * Renderiza o conteúdo de um capítulo a partir de dados JSON.
-             * @param {Array} data - Array de objetos representando o conteúdo.
-             * @returns {string} - O HTML gerado.
-             */
-            const renderContent = (data) => {
-                if (!data || !Array.isArray(data)) return '<p class="text-red-400">Formato de conteúdo inválido.</p>';
-                
-                return data.map(item => {
-                    switch (item.type) {
-                        case 'heading':
-                            return `<h2 class="text-3xl font-bold text-amber-400 mt-8 mb-4">${item.content}</h2>`;
-                        case 'subheading':
-                            return `<h3 class="text-2xl font-semibold text-white mt-6 mb-3">${item.content}</h3>`;
-                        case 'paragraph':
-                            return `<p class="my-4 leading-relaxed">${item.content}</p>`;
-                        case 'blockquote':
-                            return `<blockquote class="blockquote">${item.content}</blockquote>`;
-                        case 'list':
-                            const listItems = item.content.map(li => `<li class="mb-2">${li}</li>`).join('');
-                            return `<ul class="list-disc list-inside my-4 pl-4">${listItems}</ul>`;
-                        default:
-                            return '';
-                    }
+            const renderAccordion = (group, index) => {
+                const contentHtml = group.content.map(item => {
+                    if (item.type === 'paragraph') return `<p class="my-4 leading-relaxed text-gray-400">${item.content}</p>`;
+                    if (item.type === 'blockquote') return renderBlockquote(item);
+                    return '';
                 }).join('');
+
+                return `
+                    <div class="border-b border-gray-800">
+                        <button class="accordion-toggle w-full flex justify-between items-center text-left py-4 text-lg font-semibold text-white hover:text-amber-400 transition-colors duration-300">
+                            <span>${group.title}</span>
+                            <svg class="accordion-icon w-5 h-5 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content">
+                            <div class="p-4 pt-0">${contentHtml}</div>
+                        </div>
+                    </div>
+                `;
             };
 
-            /**
-             * Carrega e exibe todos os capítulos.
-             */
-            const loadChapters = async () => {
-                // Gera a estrutura HTML e os links de navegação primeiro
-                chapters.forEach(chapter => {
-                    // Adiciona link na navegação
-                    const navLink = document.createElement('a');
-                    navLink.href = `#chapter-${chapter.id}`;
-                    navLink.textContent = `Cap. ${chapter.id}`;
-                    navLink.className = `text-gray-400 hover:text-amber-400 transition-colors duration-300 px-3 py-2 rounded-md`;
-                    navLink.dataset.target = `chapter-${chapter.id}`;
-                    navLinksContainer.appendChild(navLink);
+            const renderFlashcards = (listData) => {
+                const listItems = listData.content.map((item, index) => {
+                    const [title, ...rest] = item.split(':');
+                    const description = rest.join(':');
+                    return `
+                        <div class="flashcard cursor-pointer">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <h4 class="text-xl font-bold">${title}</h4>
+                                </div>
+                                <div class="flashcard-back">
+                                    <p>${description}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                return `<div class="flashcard-grid mt-6">${listItems}</div>`;
+            };
+            
+            const renderBlockquote = (item) => `
+                <blockquote class="relative my-6 p-4 pl-12 bg-gray-800/50 border-l-4 border-amber-400 italic text-gray-400 rounded-r-lg">
+                    <svg class="absolute top-4 left-4 w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10.43,8.43c0,0.55-0.45,1-1,1H3.43c-0.55,0-1-0.45-1-1v-4c0-0.55,0.45-1,1-1h4c0.55,0,1,0.45,1,1V8.43z M17.43,8.43c0,0.55-0.45,1-1,1h-6c-0.55,0-1-0.45-1-1v-4c0-0.55,0.45-1,1-1h4c0.55,0,1,0.45,1,1V8.43z"></path></svg>
+                    ${item.content}
+                </blockquote>`;
 
-                    // Adiciona a seção do capítulo no container principal
+
+            const renderContent = (data) => {
+                let html = '';
+                let i = 0;
+                while (i < data.length) {
+                    const item = data[i];
+                    switch (item.type) {
+                        case 'heading':
+                            html += `<h2 class="text-3xl font-bold text-amber-400 mt-8 mb-4">${item.content}</h2>`;
+                            i++;
+                            break;
+                        case 'subheading':
+                            const group = { title: item.content, content: [] };
+                            i++;
+                            while (i < data.length && data[i].type !== 'subheading' && data[i].type !== 'heading' && data[i].type !== 'list') {
+                                group.content.push(data[i]);
+                                i++;
+                            }
+                            html += renderAccordion(group, i);
+                            break;
+                        case 'list':
+                            html += renderFlashcards(item);
+                            i++;
+                            break;
+                        case 'blockquote':
+                            html += renderBlockquote(item);
+                            i++;
+                            break;
+                        case 'paragraph':
+                        default:
+                            html += `<p class="my-4 leading-relaxed">${item.content}</p>`;
+                            i++;
+                            break;
+                    }
+                }
+                return html;
+            };
+
+            // --- LÓGICA PRINCIPAL ---
+
+            const loadChapters = async () => {
+                chapters.forEach(chapter => {
+                    const navLinkHTML = `
+                        <a href="#chapter-${chapter.id}" data-target="chapter-${chapter.id}" class="text-gray-400 hover:text-amber-400 transition-colors duration-300 px-3 py-2 rounded-md flex items-center space-x-2">
+                            <span class="text-lg">${chapter.emoji}</span>
+                            <span>Cap. ${chapter.id}</span>
+                        </a>`;
+                    navLinksContainer.innerHTML += navLinkHTML;
+
                     const section = document.createElement('section');
                     section.id = `chapter-${chapter.id}`;
                     section.className = 'fade-in-section min-h-[50vh]';
                     section.innerHTML = `
-                        <h1 class="text-4xl font-black text-white border-b-2 border-amber-400 pb-2 mb-6">
-                            Capítulo ${chapter.id}: ${chapter.title}
+                        <h1 class="text-4xl font-black text-white border-b-2 border-amber-400 pb-2 mb-6 flex items-center">
+                           <span class="text-3xl mr-4">${chapter.emoji}</span>
+                           <span>Capítulo ${chapter.id}: ${chapter.title}</span>
                         </h1>
                         <div id="content-${chapter.id}">
                             <div class="text-center py-8">
                                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mx-auto"></div>
-                                <p class="mt-4 text-gray-500">Carregando conteúdo...</p>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     contentContainer.appendChild(section);
                 });
 
-                // Carrega o conteúdo de cada JSON
                 for (const chapter of chapters) {
                     const contentDiv = document.getElementById(`content-${chapter.id}`);
                     try {
-                        // Simulação de fetch. Substitua pela URL real se estiver em um servidor.
-                        // Para este exemplo, vamos assumir que os arquivos JSON não existem ainda.
-                        // A lógica de fetch está aqui para quando os criarmos.
                         const response = await fetch(chapter.file);
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                         const data = await response.json();
                         contentDiv.innerHTML = renderContent(data);
                     } catch (error) {
                         console.error(`Erro ao carregar ${chapter.file}:`, error);
-                        contentDiv.innerHTML = `<p class="text-red-500 text-center p-8 bg-red-900/20 rounded-lg">Falha ao carregar o conteúdo do capítulo ${chapter.id}. Por favor, verifique se o arquivo <strong>${chapter.file}</strong> existe e está acessível.</p>`;
+                        contentDiv.innerHTML = `<p class="text-red-500 text-center p-8 bg-red-900/20 rounded-lg">Falha ao carregar o conteúdo do capítulo ${chapter.id}.</p>`;
                     }
                 }
-
-                // Após o carregamento, inicializa os observadores
-                setupScrollObserver();
-                setupNavObserver();
+                setupEventListeners();
+                setupScrollObservers();
             };
 
-            /**
-             * Configura o Intersection Observer para a animação de fade-in das seções.
-             */
-            const setupScrollObserver = () => {
+            // --- OBSERVERS E EVENT LISTENERS ---
+
+            const setupEventListeners = () => {
+                document.querySelectorAll('.accordion-toggle').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const content = button.nextElementSibling;
+                        button.querySelector('.accordion-icon').classList.toggle('rotate-180');
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.flashcard').forEach(card => {
+                    card.addEventListener('click', () => {
+                        card.classList.toggle('is-flipped');
+                    });
+                });
+            };
+
+            const setupScrollObservers = () => {
                 const sections = document.querySelectorAll('.fade-in-section');
-                const observer = new IntersectionObserver((entries) => {
+                const sectionObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             entry.target.classList.add('is-visible');
-                            observer.unobserve(entry.target);
+                            sectionObserver.unobserve(entry.target);
                         }
                     });
                 }, { threshold: 0.1 });
+                sections.forEach(section => sectionObserver.observe(section));
 
-                sections.forEach(section => observer.observe(section));
-            };
-            
-            /**
-             * Configura o Intersection Observer para destacar o link de navegação ativo.
-             */
-            const setupNavObserver = () => {
                 const navLinks = document.querySelectorAll('#nav-links a');
-                const observer = new IntersectionObserver((entries) => {
+                const navObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             navLinks.forEach(link => {
                                 link.classList.toggle('text-amber-400', link.dataset.target === entry.target.id);
+                                link.classList.toggle('bg-gray-700/50', link.dataset.target === entry.target.id);
                                 link.classList.toggle('text-gray-400', link.dataset.target !== entry.target.id);
                             });
                         }
                     });
                 }, { rootMargin: "-50% 0px -50% 0px" });
-
-                document.querySelectorAll('main section').forEach(section => {
-                    observer.observe(section);
-                });
+                document.querySelectorAll('main section').forEach(section => navObserver.observe(section));
             };
 
-            /**
-             * Controla a visibilidade da barra de navegação com base no scroll.
-             */
             const handleNavVisibility = () => {
                 if (window.scrollY > window.innerHeight * 0.8) {
                     nav.classList.add('opacity-100', 'translate-y-0');
