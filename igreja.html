@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Natureza e o Fundamento da Igreja</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Estilos customizados e configuração do Tailwind */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #D1D5DB; /* text-gray-300 */
+        }
+
+        /* Animação de fade-in para os elementos */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Estilo para a barra de rolagem (opcional, mas melhora a estética) */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1F2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4B5563; /* bg-gray-600 */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6B7280; /* bg-gray-500 */
+        }
+
+        /* Estilo para citações */
+        .blockquote {
+            border-left: 4px solid #FBBF24; /* border-amber-400 */
+            padding-left: 1rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: #9CA3AF; /* text-gray-400 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header / Hero Section -->
+    <header class="relative h-screen flex items-center justify-center text-center overflow-hidden">
+        <div class="absolute inset-0 bg-gray-900 opacity-75 z-10"></div>
+        <div class="absolute inset-0 z-0">
+             <!-- Fundo Abstrato Sutil -->
+             <div class="absolute inset-0 bg-grid-gray-800 [mask-image:linear-gradient(to_bottom,white_20%,transparent_100%)]"></div>
+             <style>.bg-grid-gray-800{background-image:linear-gradient(to right, #374151 1px, transparent 1px), linear-gradient(to bottom, #374151 1px, transparent 1px);background-size:2rem 2rem;}</style>
+        </div>
+        <div class="relative z-20 px-4 text-white">
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-tight mb-4" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.7);">
+                A Natureza e o Fundamento da Igreja
+            </h1>
+            <p class="text-lg md:text-xl text-amber-300 font-light max-w-3xl mx-auto">
+                Uma análise teológica profunda sobre a essência, a estrutura e o propósito da Igreja de Cristo.
+            </p>
+        </div>
+        <div class="absolute bottom-10 z-20 text-white animate-bounce">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </header>
+
+    <!-- Barra de Navegação Fixa (Aparece ao rolar) -->
+    <nav id="main-nav" class="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg shadow-lg transition-all duration-300 opacity-0 -translate-y-full">
+        <div class="max-w-5xl mx-auto px-4">
+            <div class="flex items-center justify-center h-16">
+                <div id="nav-links" class="flex space-x-6 md:space-x-8 text-sm md:text-base">
+                    <!-- Links serão injetados aqui pelo JS -->
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-5xl mx-auto p-4 md:p-8">
+        <div id="content-container" class="space-y-16">
+            <!-- Capítulos serão carregados aqui -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-20 border-t border-gray-800">
+        <div class="max-w-5xl mx-auto py-8 px-4 text-center text-gray-500 text-sm">
+            <p>&copy; <span id="year"></span>. Conteúdo adaptado do documento "A natureza da igreja".</p>
+            <p>Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURAÇÃO ---
+            const chapters = [
+                { id: 1, title: "A Igreja Definida nas Escrituras", file: "chapter1.json" },
+                { id: 2, title: "Instituição Divina e Espiritual", file: "chapter2.json" },
+                { id: 3, title: "Visível e Invisível", file: "chapter3.json" },
+                { id: 4, title: "Católica e Local", file: "chapter4.json" }
+            ];
+            
+            // --- ELEMENTOS DO DOM ---
+            const contentContainer = document.getElementById('content-container');
+            const nav = document.getElementById('main-nav');
+            const navLinksContainer = document.getElementById('nav-links');
+            const yearSpan = document.getElementById('year');
+            yearSpan.textContent = new Date().getFullYear();
+
+            // --- FUNÇÕES ---
+
+            /**
+             * Renderiza o conteúdo de um capítulo a partir de dados JSON.
+             * @param {Array} data - Array de objetos representando o conteúdo.
+             * @returns {string} - O HTML gerado.
+             */
+            const renderContent = (data) => {
+                if (!data || !Array.isArray(data)) return '<p class="text-red-400">Formato de conteúdo inválido.</p>';
+                
+                return data.map(item => {
+                    switch (item.type) {
+                        case 'heading':
+                            return `<h2 class="text-3xl font-bold text-amber-400 mt-8 mb-4">${item.content}</h2>`;
+                        case 'subheading':
+                            return `<h3 class="text-2xl font-semibold text-white mt-6 mb-3">${item.content}</h3>`;
+                        case 'paragraph':
+                            return `<p class="my-4 leading-relaxed">${item.content}</p>`;
+                        case 'blockquote':
+                            return `<blockquote class="blockquote">${item.content}</blockquote>`;
+                        case 'list':
+                            const listItems = item.content.map(li => `<li class="mb-2">${li}</li>`).join('');
+                            return `<ul class="list-disc list-inside my-4 pl-4">${listItems}</ul>`;
+                        default:
+                            return '';
+                    }
+                }).join('');
+            };
+
+            /**
+             * Carrega e exibe todos os capítulos.
+             */
+            const loadChapters = async () => {
+                // Gera a estrutura HTML e os links de navegação primeiro
+                chapters.forEach(chapter => {
+                    // Adiciona link na navegação
+                    const navLink = document.createElement('a');
+                    navLink.href = `#chapter-${chapter.id}`;
+                    navLink.textContent = `Cap. ${chapter.id}`;
+                    navLink.className = `text-gray-400 hover:text-amber-400 transition-colors duration-300 px-3 py-2 rounded-md`;
+                    navLink.dataset.target = `chapter-${chapter.id}`;
+                    navLinksContainer.appendChild(navLink);
+
+                    // Adiciona a seção do capítulo no container principal
+                    const section = document.createElement('section');
+                    section.id = `chapter-${chapter.id}`;
+                    section.className = 'fade-in-section min-h-[50vh]';
+                    section.innerHTML = `
+                        <h1 class="text-4xl font-black text-white border-b-2 border-amber-400 pb-2 mb-6">
+                            Capítulo ${chapter.id}: ${chapter.title}
+                        </h1>
+                        <div id="content-${chapter.id}">
+                            <div class="text-center py-8">
+                                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400 mx-auto"></div>
+                                <p class="mt-4 text-gray-500">Carregando conteúdo...</p>
+                            </div>
+                        </div>
+                    `;
+                    contentContainer.appendChild(section);
+                });
+
+                // Carrega o conteúdo de cada JSON
+                for (const chapter of chapters) {
+                    const contentDiv = document.getElementById(`content-${chapter.id}`);
+                    try {
+                        // Simulação de fetch. Substitua pela URL real se estiver em um servidor.
+                        // Para este exemplo, vamos assumir que os arquivos JSON não existem ainda.
+                        // A lógica de fetch está aqui para quando os criarmos.
+                        const response = await fetch(chapter.file);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        contentDiv.innerHTML = renderContent(data);
+                    } catch (error) {
+                        console.error(`Erro ao carregar ${chapter.file}:`, error);
+                        contentDiv.innerHTML = `<p class="text-red-500 text-center p-8 bg-red-900/20 rounded-lg">Falha ao carregar o conteúdo do capítulo ${chapter.id}. Por favor, verifique se o arquivo <strong>${chapter.file}</strong> existe e está acessível.</p>`;
+                    }
+                }
+
+                // Após o carregamento, inicializa os observadores
+                setupScrollObserver();
+                setupNavObserver();
+            };
+
+            /**
+             * Configura o Intersection Observer para a animação de fade-in das seções.
+             */
+            const setupScrollObserver = () => {
+                const sections = document.querySelectorAll('.fade-in-section');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                sections.forEach(section => observer.observe(section));
+            };
+            
+            /**
+             * Configura o Intersection Observer para destacar o link de navegação ativo.
+             */
+            const setupNavObserver = () => {
+                const navLinks = document.querySelectorAll('#nav-links a');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            navLinks.forEach(link => {
+                                link.classList.toggle('text-amber-400', link.dataset.target === entry.target.id);
+                                link.classList.toggle('text-gray-400', link.dataset.target !== entry.target.id);
+                            });
+                        }
+                    });
+                }, { rootMargin: "-50% 0px -50% 0px" });
+
+                document.querySelectorAll('main section').forEach(section => {
+                    observer.observe(section);
+                });
+            };
+
+            /**
+             * Controla a visibilidade da barra de navegação com base no scroll.
+             */
+            const handleNavVisibility = () => {
+                if (window.scrollY > window.innerHeight * 0.8) {
+                    nav.classList.add('opacity-100', 'translate-y-0');
+                    nav.classList.remove('opacity-0', '-translate-y-full');
+                } else {
+                    nav.classList.remove('opacity-100', 'translate-y-0');
+                    nav.classList.add('opacity-0', '-translate-y-full');
+                }
+            };
+
+            // --- INICIALIZAÇÃO ---
+            window.addEventListener('scroll', handleNavVisibility);
+            loadChapters();
+        });
+    </script>
+
+</body>
+</html>
